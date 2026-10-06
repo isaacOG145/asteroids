@@ -1,0 +1,50 @@
+# ==========================================
+# Archivos y carpetas temporales de Unity
+# ==========================================
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+
+# ==========================================
+# Archivos de solución y proyectos del IDE
+# ==========================================
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.opendb
+*.idb
+
+# Configuración y caché de editores específicos
+.vs/
+.idea/
+*.workspace
+.vscode/
+
+# ==========================================
+# Archivos del sistema operativo y logs
+# ==========================================
+.DS_Store
+.DS_Store?
+ehthumbs.db
+Thumbs.db
+*.log
+
+# ==========================================
+# Compilaciones y builds locales
+# ==========================================
+*.apk
+*.aab
+*.unitypackage
+*.app
