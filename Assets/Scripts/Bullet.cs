@@ -4,6 +4,7 @@ public class Bullet : MonoBehaviour
 {
     public float velocidad = 12f;
     public float tiempoVida = 2f;
+    public AudioClip sonidoExplosion;
     
 
     void Start()
@@ -27,6 +28,11 @@ public class Bullet : MonoBehaviour
             FindFirstObjectByType<GameManager>();
 
         gameManager.SumarPuntos(100);
+
+        AudioSource.PlayClipAtPoint(
+            sonidoExplosion,
+            collision.transform.position
+        );
 
         Destroy(collision.gameObject);
         Destroy(gameObject);

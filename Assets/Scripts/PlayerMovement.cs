@@ -13,9 +13,16 @@ public class PlayerMovement : MonoBehaviour
     private bool gameOver = false;
     public float tiempoEntreDisparos = 0.6f;
 
+    public AudioClip sonidoDisparo;
+    public AudioClip sonidoMuerte;
+    public AudioClip sonidoReinicio;    
+
+private AudioSource audioSource;
+
 private float siguienteDisparo = 0f;
     void Start()
     {
+        audioSource = GetComponent<AudioSource>();
         rb = GetComponent<Rigidbody2D>();
     }
 
@@ -86,33 +93,39 @@ private float siguienteDisparo = 0f;
             puntoDisparo.position,
             puntoDisparo.rotation
         );
+
+        audioSource.PlayOneShot(sonidoDisparo);
     }
     
-    private void OnCollisionEnter2D(Collision2D collision)
-{
-    if (collision.gameObject.CompareTag("Asteroid"))
+      private void OnCollisionEnter2D(Collision2D collision)
     {
-        GameManager gameManager =
-            FindFirstObjectByType<GameManager>();
-
-        gameManager.PerderVida();
-
-        Destroy(collision.gameObject);
-
-        if (gameManager.vidas <= 0)
+        if (collision.gameObject.CompareTag("Asteroid"))
         {
-            Debug.Log("GAME OVER");
+            GameManager gameManager =
+                FindFirstObjectByType<GameManager>();
 
-            gameOver = true;
+            gameManager.PerderVida();
 
-            Time.timeScale = 0f;
-        }
-        else
-        {
-            ReiniciarJugador();
+            Destroy(collision.gameObject);
+
+            if (gameManager.vidas <= 0)
+            {
+                AudioSource.PlayClipAtPoint(
+                    sonidoMuerte,
+                    collision.transform.position
+                );
+                Debug.Log("GAME OVER");
+
+                gameOver = true;
+                Time.timeScale = 0f;
+            }
+            else
+            {
+                audioSource.PlayOneShot(sonidoReinicio);
+                ReiniciarJugador();
+            }
         }
     }
-}
 
 void ReiniciarJugador()
 {
