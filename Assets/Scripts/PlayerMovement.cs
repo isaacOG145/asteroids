@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+using System.Collections;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -12,46 +13,107 @@ public class PlayerMovement : MonoBehaviour
     private Rigidbody2D rb;
     private bool gameOver = false;
     public float tiempoEntreDisparos = 0.6f;
-
+    private float siguienteDisparo = 0f;
     public AudioClip sonidoDisparo;
+    private AudioSource audioSource;
     public AudioClip sonidoMuerte;
-    public AudioClip sonidoReinicio;    
+    public AudioClip sonidoReinicio;
+    public ParticleSystem propulsor;
+    public GameObject explosionPrefab;
+    private SpriteRenderer spriteRenderer;
+    private Collider2D playerCollider;
+    private bool invulnerable = false;
+    public float tiempoInvulnerable = 3f;
+    public float velocidadParpadeo = 0.15f;
+    
+    IEnumerator Parpadear()
+    {
+        float tiempo = 0f;
 
-private AudioSource audioSource;
+        while (tiempo < tiempoInvulnerable)
+        {
+            spriteRenderer.enabled =
+                !spriteRenderer.enabled;
 
-private float siguienteDisparo = 0f;
+            yield return new WaitForSeconds(
+                velocidadParpadeo
+            );
+
+            tiempo += velocidadParpadeo;
+        }
+
+        spriteRenderer.enabled = true;
+    }
+    
+    IEnumerator Reaparecer()
+    {
+        invulnerable = true;
+
+        spriteRenderer.enabled = false;
+        playerCollider.enabled = false;
+
+        propulsor.Stop();
+
+        rb.linearVelocity = Vector2.zero;
+        rb.angularVelocity = 0f;
+
+        transform.position = Vector3.zero;
+        transform.rotation = Quaternion.identity;
+
+        yield return new WaitForSeconds(1f);
+
+        spriteRenderer.enabled = true;
+
+        yield return StartCoroutine(Parpadear());
+
+        playerCollider.enabled = true;
+
+        invulnerable = false;
+    }
+    
     void Start()
     {
         audioSource = GetComponent<AudioSource>();
         rb = GetComponent<Rigidbody2D>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        playerCollider = GetComponent<Collider2D>();
     }
 
     
     void Update()
     {
-        if (!gameOver &&
-    Keyboard.current.spaceKey.isPressed &&
-    Time.time >= siguienteDisparo)
-{
-    Disparar();
-
-    siguienteDisparo =
-        Time.time + tiempoEntreDisparos;
-}
-
-        if (gameOver &&
-            Keyboard.current.rKey.wasPressedThisFrame)
+        if (gameOver)
         {
-            Time.timeScale = 1f;
+            Debug.Log("GAME OVER");
+            if (Keyboard.current.rKey.wasPressedThisFrame)
+            {
+                Time.timeScale = 1f;
 
-            SceneManager.LoadScene(
-                SceneManager.GetActiveScene().buildIndex
-            );
+                SceneManager.LoadScene(
+                    SceneManager.GetActiveScene().buildIndex
+                );
+            }
+
+            return;
+        }
+
+        if (Keyboard.current.spaceKey.isPressed &&
+            Time.time >= siguienteDisparo)
+        {
+            Disparar();
+
+            siguienteDisparo =
+                Time.time + tiempoEntreDisparos;
         }
     }
-    
+
     void FixedUpdate()
     {
+        if (gameOver)
+        {
+            return;
+        }
+
         float rotacion = 0;
 
         if (Keyboard.current.aKey.isPressed ||
@@ -70,15 +132,27 @@ private float siguienteDisparo = 0f;
             Keyboard.current.upArrowKey.isPressed)
         {
             rb.AddForce(transform.up * fuerzaImpulso);
+
+            if (!propulsor.isPlaying)
+            {
+                propulsor.Play();
+            }
         }
-        
+        else
+        {
+            if (propulsor.isPlaying)
+            {
+                propulsor.Stop();
+            }
+        }
+
         rb.MoveRotation(
             rb.rotation +
             rotacion *
             velocidadRotacion *
             Time.fixedDeltaTime
         );
-        
+
         if (rb.linearVelocity.magnitude > velocidadMaxima)
         {
             rb.linearVelocity =
@@ -97,42 +171,42 @@ private float siguienteDisparo = 0f;
         audioSource.PlayOneShot(sonidoDisparo);
     }
     
-      private void OnCollisionEnter2D(Collision2D collision)
+    private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("Asteroid"))
+        if (collision.gameObject.CompareTag("Asteroid") &&
+            !invulnerable)
         {
             GameManager gameManager =
                 FindFirstObjectByType<GameManager>();
 
             gameManager.PerderVida();
 
+            audioSource.PlayOneShot(sonidoMuerte);
+
+            Instantiate(
+                explosionPrefab,
+                transform.position,
+                Quaternion.identity
+            );
+
             Destroy(collision.gameObject);
 
             if (gameManager.vidas <= 0)
             {
-                AudioSource.PlayClipAtPoint(
-                    sonidoMuerte,
-                    collision.transform.position
-                );
                 Debug.Log("GAME OVER");
 
                 gameOver = true;
-                Time.timeScale = 0f;
+
+                spriteRenderer.enabled = false;
+                playerCollider.enabled = false;
+
+                propulsor.Stop();
             }
             else
             {
-                audioSource.PlayOneShot(sonidoReinicio);
-                ReiniciarJugador();
+                StartCoroutine(Reaparecer());
             }
         }
     }
 
-void ReiniciarJugador()
-{
-    transform.position = Vector3.zero;
-
-    rb.linearVelocity = Vector2.zero;
-
-    rb.angularVelocity = 0f;
-}
 }

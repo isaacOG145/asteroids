@@ -5,6 +5,7 @@ public class Bullet : MonoBehaviour
     public float velocidad = 12f;
     public float tiempoVida = 2f;
     public AudioClip sonidoExplosion;
+    public GameObject explosionPrefab; 
     
 
     void Start()
@@ -33,6 +34,12 @@ public class Bullet : MonoBehaviour
             sonidoExplosion,
             collision.transform.position
         );
+
+        Instantiate(
+    explosionPrefab,
+    collision.transform.position,
+    Quaternion.identity
+);
 
         Destroy(collision.gameObject);
         Destroy(gameObject);
