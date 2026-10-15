@@ -26,6 +26,12 @@ public class PlayerMovement : MonoBehaviour
     public float tiempoInvulnerable = 3f;
     public float velocidadParpadeo = 0.15f;
     
+
+    void Awake()
+{
+    Time.timeScale = 1f;
+}
+
     IEnumerator Parpadear()
     {
         float tiempo = 0f;
@@ -85,6 +91,10 @@ public class PlayerMovement : MonoBehaviour
         if (gameOver)
         {
             Debug.Log("GAME OVER");
+            GameManager gameManager =
+                FindFirstObjectByType<GameManager>();
+            gameManager.GameOver();
+
             if (Keyboard.current.rKey.wasPressedThisFrame)
             {
                 Time.timeScale = 1f;
